@@ -1,24 +1,20 @@
 package com.example.algorithms.divideconquer.metrics;
 
-
 public final class Metrics {
-    public long comparisons;
-    public long moves;
-    public int maxDepth;
+    public long comparisonCount;
+    public long moveCount;
+    public int maxRecursionDepth;
 
+    private int currentDepth;
 
-    private int depth;
-
-
-    public void incCmp() { comparisons++; }
-    public void addCmp(long k) { comparisons += k; }
-    public void incMove() { moves++; }
-    public void addMove(long k) { moves += k; }
-
+    public void incCmp() { comparisonCount++; }
+    public void addCmp(long amount) { comparisonCount += amount; }
+    public void incMove() { moveCount++; }
+    public void addMove(long amount) { moveCount += amount; }
 
     public void enter() {
-        depth++;
-        if (depth > maxDepth) maxDepth = depth;
+        currentDepth++;
+        if (currentDepth > maxRecursionDepth) maxRecursionDepth = currentDepth;
     }
-    public void leave() { depth--; }
+    public void leave() { currentDepth--; }
 }
