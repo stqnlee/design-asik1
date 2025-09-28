@@ -1,66 +1,58 @@
 package com.example.algorithms.divideconquer.sort;
 
-
 import com.example.algorithms.divideconquer.metrics.Metrics;
-import java.util.Arrays;
-
 
 public final class MergeSort {
     private static final int INSERTION_CUTOFF = 24;
 
-
-    public static <T extends Comparable<T>> void sort(T[] a, Metrics m) {
+    public static <T extends Comparable<T>> void sort(T[] array, Metrics performanceMetrics) {
         @SuppressWarnings("unchecked")
-        T[] buf = (T[]) new Comparable[a.length];
-        sort(a, buf, 0, a.length, m);
+        T[] buffer = (T[]) new Comparable[array.length];
+        sort(array, buffer, 0, array.length, performanceMetrics);
     }
 
-
-    private static <T extends Comparable<T>> void sort(T[] a, T[] buf, int lo, int hi, Metrics m) {
-        int n = hi - lo;
-        if (n <= 1) return;
-        if (n <= INSERTION_CUTOFF) {
-            insertion(a, lo, hi, m);
+    private static <T extends Comparable<T>> void sort(T[] array, T[] buffer, int startIndex, int endIndex, Metrics performanceMetrics) {
+        int count = endIndex - startIndex;
+        if (count <= 1) return;
+        if (count <= INSERTION_CUTOFF) {
+            insertion(array, startIndex, endIndex, performanceMetrics);
             return;
         }
-        m.enter();
-        int mid = lo + (n >>> 1);
-        sort(a, buf, lo, mid, m);
-        sort(a, buf, mid, hi, m);
-        merge(a, buf, lo, mid, hi, m);
-        m.leave();
+        performanceMetrics.enter();
+        int midIndex = startIndex + (count >>> 1);
+        sort(array, buffer, startIndex, midIndex, performanceMetrics);
+        sort(array, buffer, midIndex, endIndex, performanceMetrics);
+        merge(array, buffer, startIndex, midIndex, endIndex, performanceMetrics);
+        performanceMetrics.leave();
     }
 
-
-    private static <T extends Comparable<T>> void merge(T[] a, T[] buf, int lo, int mid, int hi, Metrics m) {
-        System.arraycopy(a, lo, buf, lo, hi - lo);
-        int i = lo, j = mid, k = lo;
-        while (i < mid && j < hi) {
-            m.incCmp();
-            if (compare(buf[i], buf[j]) <= 0) {
-                a[k++] = buf[i++]; m.incMove();
+    private static <T extends Comparable<T>> void merge(T[] array, T[] buffer, int startIndex, int midIndex, int endIndex, Metrics performanceMetrics) {
+        System.arraycopy(array, startIndex, buffer, startIndex, endIndex - startIndex);
+        int leftPointer = startIndex, rightPointer = midIndex, writePointer = startIndex;
+        while (leftPointer < midIndex && rightPointer < endIndex) {
+            performanceMetrics.incCmp();
+            if (compare(buffer[leftPointer], buffer[rightPointer]) <= 0) {
+                array[writePointer++] = buffer[leftPointer++]; performanceMetrics.incMove();
             } else {
-                a[k++] = buf[j++]; m.incMove();
+                array[writePointer++] = buffer[rightPointer++]; performanceMetrics.incMove();
             }
         }
-        while (i < mid) { a[k++] = buf[i++]; m.incMove(); }
-        while (j < hi) { a[k++] = buf[j++]; m.incMove(); }
+        while (leftPointer < midIndex) { array[writePointer++] = buffer[leftPointer++]; performanceMetrics.incMove(); }
+        while (rightPointer < endIndex) { array[writePointer++] = buffer[rightPointer++]; performanceMetrics.incMove(); }
     }
 
-
-    private static <T extends Comparable<T>> void insertion(T[] a, int lo, int hi, Metrics m) {
-        for (int i = lo + 1; i < hi; i++) {
-            T key = a[i]; m.incMove();
-            int j = i - 1;
-            while (j >= lo) {
-                m.incCmp();
-                if (compare(a[j], key) > 0) { a[j+1] = a[j]; m.incMove(); j--; }
+    private static <T extends Comparable<T>> void insertion(T[] array, int startIndex, int endIndex, Metrics performanceMetrics) {
+        for (int outerLoopIndex = startIndex + 1; outerLoopIndex < endIndex; outerLoopIndex++) {
+            T currentValue = array[outerLoopIndex]; performanceMetrics.incMove();
+            int innerLoopIndex = outerLoopIndex - 1;
+            while (innerLoopIndex >= startIndex) {
+                performanceMetrics.incCmp();
+                if (compare(array[innerLoopIndex], currentValue) > 0) { array[innerLoopIndex + 1] = array[innerLoopIndex]; performanceMetrics.incMove(); innerLoopIndex--; }
                 else break;
             }
-            a[j+1] = key; m.incMove();
+            array[innerLoopIndex + 1] = currentValue; performanceMetrics.incMove();
         }
     }
 
-
-    private static <T extends Comparable<T>> int compare(T x, T y) { return x.compareTo(y); }
+    private static <T extends Comparable<T>> int compare(T val1, T val2) { return val1.compareTo(val2); }
 }
