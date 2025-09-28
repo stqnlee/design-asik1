@@ -1,71 +1,63 @@
 package com.example.algorithms.divideconquer.sort;
 
-
 import com.example.algorithms.divideconquer.metrics.Metrics;
 import java.util.concurrent.ThreadLocalRandom;
-
 
 public final class QuickSort {
     private static final int INSERTION_CUTOFF = 20;
 
-
-    public static <T extends Comparable<T>> void sort(T[] a, Metrics m) {
-        qs(a, 0, a.length - 1, m);
+    public static <T extends Comparable<T>> void sort(T[] array, Metrics performanceMetrics) {
+        qs(array, 0, array.length - 1, performanceMetrics);
     }
 
+    private static <T extends Comparable<T>> void qs(T[] array, int startIndex, int endIndex, Metrics performanceMetrics) {
+        while (startIndex < endIndex) {
+            int count = endIndex - startIndex + 1;
+            if (count <= INSERTION_CUTOFF) { insertion(array, startIndex, endIndex, performanceMetrics); return; }
 
-    private static <T extends Comparable<T>> void qs(T[] a, int lo, int hi, Metrics m) {
-        while (lo < hi) {
-            int n = hi - lo + 1;
-            if (n <= INSERTION_CUTOFF) { insertion(a, lo, hi, m); return; }
-
-
-            m.enter();
-            int p = partitionRandom(a, lo, hi, m);
-            if (p - lo < hi - p) {
-                qs(a, lo, p - 1, m);
-                lo = p + 1;
+            performanceMetrics.enter();
+            int partitionIndex = partitionRandom(array, startIndex, endIndex, performanceMetrics);
+            if (partitionIndex - startIndex < endIndex - partitionIndex) {
+                qs(array, startIndex, partitionIndex - 1, performanceMetrics);
+                startIndex = partitionIndex + 1;
             } else {
-                qs(a, p + 1, hi, m);
-                hi = p - 1;
+                qs(array, partitionIndex + 1, endIndex, performanceMetrics);
+                endIndex = partitionIndex - 1;
             }
-            m.leave();
+            performanceMetrics.leave();
         }
     }
 
-
-    private static <T extends Comparable<T>> int partitionRandom(T[] a, int lo, int hi, Metrics m) {
-        int r = ThreadLocalRandom.current().nextInt(lo, hi + 1);
-        swap(a, r, hi, m);
-        T pivot = a[hi];
-        int i = lo - 1;
-        for (int j = lo; j < hi; j++) {
-            m.incCmp();
-            if (a[j].compareTo(pivot) <= 0) {
-                i++; swap(a, i, j, m);
+    private static <T extends Comparable<T>> int partitionRandom(T[] array, int startIndex, int endIndex, Metrics performanceMetrics) {
+        int randomIndex = ThreadLocalRandom.current().nextInt(startIndex, endIndex + 1);
+        swap(array, randomIndex, endIndex, performanceMetrics);
+        T pivotValue = array[endIndex];
+        int lesserElementIndex = startIndex - 1;
+        for (int iterator = startIndex; iterator < endIndex; iterator++) {
+            performanceMetrics.incCmp();
+            if (array[iterator].compareTo(pivotValue) <= 0) {
+                lesserElementIndex++; swap(array, lesserElementIndex, iterator, performanceMetrics);
             }
         }
-        swap(a, i + 1, hi, m);
-        return i + 1;
+        swap(array, lesserElementIndex + 1, endIndex, performanceMetrics);
+        return lesserElementIndex + 1;
     }
 
-
-    private static <T> void swap(T[] a, int i, int j, Metrics m) {
-        if (i == j) return;
-        T t = a[i]; a[i] = a[j]; a[j] = t; m.addMove(3);
+    private static <T> void swap(T[] array, int index1, int index2, Metrics performanceMetrics) {
+        if (index1 == index2) return;
+        T temp = array[index1]; array[index1] = array[index2]; array[index2] = temp; performanceMetrics.addMove(3);
     }
 
-
-    private static <T extends Comparable<T>> void insertion(T[] a, int lo, int hi, Metrics m) {
-        for (int i = lo + 1; i <= hi; i++) {
-            T key = a[i]; m.incMove();
-            int j = i - 1;
-            while (j >= lo) {
-                m.incCmp();
-                if (a[j].compareTo(key) > 0) { a[j+1] = a[j]; m.incMove(); j--; }
+    private static <T extends Comparable<T>> void insertion(T[] array, int startIndex, int endIndex, Metrics performanceMetrics) {
+        for (int outerLoopIndex = startIndex + 1; outerLoopIndex <= endIndex; outerLoopIndex++) {
+            T currentValue = array[outerLoopIndex]; performanceMetrics.incMove();
+            int innerLoopIndex = outerLoopIndex - 1;
+            while (innerLoopIndex >= startIndex) {
+                performanceMetrics.incCmp();
+                if (array[innerLoopIndex].compareTo(currentValue) > 0) { array[innerLoopIndex + 1] = array[innerLoopIndex]; performanceMetrics.incMove(); innerLoopIndex--; }
                 else break;
             }
-            a[j+1] = key; m.incMove();
+            array[innerLoopIndex + 1] = currentValue; performanceMetrics.incMove();
         }
     }
 }
