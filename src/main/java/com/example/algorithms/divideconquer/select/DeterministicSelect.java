@@ -1,86 +1,78 @@
 package com.example.algorithms.divideconquer.select;
 
-
 import com.example.algorithms.divideconquer.metrics.Metrics;
-import java.util.Arrays;
-
 
 public final class DeterministicSelect {
-    public static <T extends Comparable<T>> T select(T[] a, int lo, int hi, int k, Metrics m) {
-        if (k < lo || k > hi) throw new IllegalArgumentException("k out of range");
+    public static <T extends Comparable<T>> T select(T[] array, int startIndex, int endIndex, int targetIndex, Metrics performanceMetrics) {
+        if (targetIndex < startIndex || targetIndex > endIndex) throw new IllegalArgumentException("targetIndex out of range");
         while (true) {
-            if (lo == hi) return a[lo];
-            m.enter();
-            int pivotIndex = pivotByMediansOf5(a, lo, hi, m);
-            int p = partition(a, lo, hi, pivotIndex, m);
-            if (k == p) { m.leave(); return a[p]; }
-            else if (k < p) { hi = p - 1; }
-            else { lo = p + 1; }
-            m.leave();
+            if (startIndex == endIndex) return array[startIndex];
+            performanceMetrics.enter();
+            int newPivotIndex = pivotByMediansOf5(array, startIndex, endIndex, performanceMetrics);
+            int partitionIndex = partition(array, startIndex, endIndex, newPivotIndex, performanceMetrics);
+            if (targetIndex == partitionIndex) { performanceMetrics.leave(); return array[partitionIndex]; }
+            else if (targetIndex < partitionIndex) { endIndex = partitionIndex - 1; }
+            else { startIndex = partitionIndex + 1; }
+            performanceMetrics.leave();
         }
     }
 
-
-    private static <T extends Comparable<T>> int pivotByMediansOf5(T[] a, int lo, int hi, Metrics m) {
-        int n = hi - lo + 1;
-        if (n <= 5) {
-            insertion(a, lo, hi, m);
-            return lo + n/2;
+    private static <T extends Comparable<T>> int pivotByMediansOf5(T[] array, int startIndex, int endIndex, Metrics performanceMetrics) {
+        int count = endIndex - startIndex + 1;
+        if (count <= 5) {
+            insertion(array, startIndex, endIndex, performanceMetrics);
+            return startIndex + count / 2;
         }
-        int write = lo;
-        for (int i = lo; i <= hi; i += 5) {
-            int r = Math.min(i + 4, hi);
-            insertion(a, i, r, m);
-            int median = i + (r - i) / 2;
-            swap(a, write++, median, m);
+        int writeIndex = startIndex;
+        for (int iterator = startIndex; iterator <= endIndex; iterator += 5) {
+            int rightBound = Math.min(iterator + 4, endIndex);
+            insertion(array, iterator, rightBound, performanceMetrics);
+            int medianIndex = iterator + (rightBound - iterator) / 2;
+            swap(array, writeIndex++, medianIndex, performanceMetrics);
         }
-        return selectIndex(a, lo, write - 1, (write - lo)/2, m);
+        return selectIndex(array, startIndex, writeIndex - 1, (writeIndex - startIndex) / 2, performanceMetrics);
     }
 
-
-    private static <T extends Comparable<T>> int selectIndex(T[] a, int lo, int hi, int kOffset, Metrics m) {
+    private static <T extends Comparable<T>> int selectIndex(T[] array, int startIndex, int endIndex, int targetOffset, Metrics performanceMetrics) {
         while (true) {
-            if (lo == hi) return lo;
-            int pivotIndex = pivotByMediansOf5(a, lo, hi, m);
-            int p = partition(a, lo, hi, pivotIndex, m);
-            int rank = p - lo;
-            if (kOffset == rank) return p;
-            else if (kOffset < rank) hi = p - 1;
-            else { kOffset -= rank + 1; lo = p + 1; }
+            if (startIndex == endIndex) return startIndex;
+            int newPivotIndex = pivotByMediansOf5(array, startIndex, endIndex, performanceMetrics);
+            int partitionIndex = partition(array, startIndex, endIndex, newPivotIndex, performanceMetrics);
+            int partitionRank = partitionIndex - startIndex;
+            if (targetOffset == partitionRank) return partitionIndex;
+            else if (targetOffset < partitionRank) endIndex = partitionIndex - 1;
+            else { targetOffset -= partitionRank + 1; startIndex = partitionIndex + 1; }
         }
     }
 
-
-    private static <T extends Comparable<T>> int partition(T[] a, int lo, int hi, int pivotIndex, Metrics m) {
-        swap(a, pivotIndex, hi, m);
-        T pivot = a[hi];
-        int i = lo;
-        for (int j = lo; j < hi; j++) {
-            m.incCmp();
-            if (a[j].compareTo(pivot) < 0) {
-                swap(a, i, j, m); i++;
+    private static <T extends Comparable<T>> int partition(T[] array, int startIndex, int endIndex, int initialPivotIndex, Metrics performanceMetrics) {
+        swap(array, initialPivotIndex, endIndex, performanceMetrics);
+        T pivotValue = array[endIndex];
+        int storeIndex = startIndex;
+        for (int iterator = startIndex; iterator < endIndex; iterator++) {
+            performanceMetrics.incCmp();
+            if (array[iterator].compareTo(pivotValue) < 0) {
+                swap(array, storeIndex, iterator, performanceMetrics); storeIndex++;
             }
         }
-        swap(a, i, hi, m);
-        return i;
+        swap(array, storeIndex, endIndex, performanceMetrics);
+        return storeIndex;
     }
 
-
-    private static <T extends Comparable<T>> void insertion(T[] a, int lo, int hi, Metrics m) {
-        for (int i = lo + 1; i <= hi; i++) {
-            T key = a[i]; m.incMove();
-            int j = i - 1;
-            while (j >= lo) {
-                m.incCmp();
-                if (a[j].compareTo(key) > 0) { a[j+1] = a[j]; m.incMove(); j--; }
+    private static <T extends Comparable<T>> void insertion(T[] array, int startIndex, int endIndex, Metrics performanceMetrics) {
+        for (int outerLoopIndex = startIndex + 1; outerLoopIndex <= endIndex; outerLoopIndex++) {
+            T currentValue = array[outerLoopIndex]; performanceMetrics.incMove();
+            int innerLoopIndex = outerLoopIndex - 1;
+            while (innerLoopIndex >= startIndex) {
+                performanceMetrics.incCmp();
+                if (array[innerLoopIndex].compareTo(currentValue) > 0) { array[innerLoopIndex + 1] = array[innerLoopIndex]; performanceMetrics.incMove(); innerLoopIndex--; }
                 else break;
             }
-            a[j+1] = key; m.incMove();
+            array[innerLoopIndex + 1] = currentValue; performanceMetrics.incMove();
         }
     }
 
-
-    private static <T> void swap(T[] a, int i, int j, Metrics m) {
-        if (i == j) return; T t = a[i]; a[i] = a[j]; a[j] = t; m.addMove(3);
+    private static <T> void swap(T[] array, int index1, int index2, Metrics performanceMetrics) {
+        if (index1 == index2) return; T temp = array[index1]; array[index1] = array[index2]; array[index2] = temp; performanceMetrics.addMove(3);
     }
 }
