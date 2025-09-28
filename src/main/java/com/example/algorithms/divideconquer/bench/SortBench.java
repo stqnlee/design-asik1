@@ -10,23 +10,24 @@ import java.util.Random;
 public class SortBench {
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
-        int n = args.length > 0 ? Integer.parseInt(args[0]) : 100_000;
-        Integer[] base = new Random(42).ints(n).boxed().toArray(Integer[]::new);
+        int arraySize = args.length > 0 ? Integer.parseInt(args[0]) : 100_000;
+        Integer[] baseArray = new Random(42).ints(arraySize).boxed().toArray(Integer[]::new);
 
-        bench("mergesort", base.clone());
-        bench("quicksort", base.clone());
+        bench("mergesort", baseArray.clone());
+        bench("quicksort", baseArray.clone());
     }
 
-    private static void bench(String name, Integer[] a) {
-        Metrics m = new Metrics();
-        long t0 = System.nanoTime();
-        if (name.equals("mergesort")) {
-            MergeSort.sort(a, m);
+    private static void bench(String algorithmName, Integer[] inputArray) {
+        Metrics performanceMetrics = new Metrics();
+        long startTime = System.nanoTime();
+        if (algorithmName.equals("mergesort")) {
+            MergeSort.sort(inputArray, performanceMetrics);
         } else {
-            QuickSort.sort(a, m);
+            QuickSort.sort(inputArray, performanceMetrics);
         }
-        long t1 = System.nanoTime();
+        long endTime = System.nanoTime();
         System.out.printf("%s,%d,%.3f,%d,%d,%d%n",
-                name, a.length, (t1 - t0) / 1e6, m.maxDepth, m.comparisons, m.moves);
+                algorithmName, inputArray.length, (endTime - startTime) / 1e6,
+                performanceMetrics.maxRecursionDepth, performanceMetrics.comparisonCount, performanceMetrics.moveCount);
     }
 }
